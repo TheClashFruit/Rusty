@@ -3,10 +3,7 @@ use std::net::TcpStream;
 use std::io::prelude::*;
 use std::fs;
 use std::env;
-use std::error::Error;
-use httparse;
 use try_catch::*;
-use std::io;
 
 fn main() {
   let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
@@ -31,25 +28,36 @@ fn handle_connection(mut stream: TcpStream) {
     .unwrap_or_else(|| &buffer_string)
     .replace("GET ", "")
     .replace("POST ", "")
-    .replace(" HTTP/1.1", "");
+    .replace(" HTTP/1.1", "")
+    .replace("\r", "");
 
   if(env::consts::OS == "windows") {
     let path = path.replace("/", "\\");
 
-    send_response(&mut stream, &path);
+    send_response(&mut stream, path);
   } else {
-    send_response(&mut stream, &path);
+    send_response(&mut stream, path);
   }
 }
 
-fn send_response(stream: &mut TcpStream, path: &str) {
+fn send_response(stream: &mut TcpStream, path: String) {
   catch! {
     try {
-      if path.ends_with("/") || path.ends_with("\\") {
+      if path == "/info.rusty.dbg" || path == "\\info.rusty.dbg" {
+        let contents = format!("<rusty><os><name>{}</name></os></rusty>", env::consts::OS);
+
+        let response = format!("{}\r\nContent-Length: {}\r\nContent-Type: application/xml\r\n\r\n{}",
+                               "HTTP/1.1 200 OK",
+                               contents.len(),
+                               contents);
+
+        stream.write(response.as_bytes()).unwrap();
+        stream.flush().unwrap();
+      } else if path.ends_with(&"/") || path.ends_with(&"\\") {
         println!("{}", format!("html{}index.html", path));
 
-        let pathString = format!("html{}index.html", path);
-        let contents = fs::read_to_string(pathString)?;
+        let path_string = format!("html{}index.html", path);
+        let contents = fs::read_to_string(path_string)?;
 
         let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}",
                                "HTTP/1.1 200 OK",
@@ -61,8 +69,8 @@ fn send_response(stream: &mut TcpStream, path: &str) {
       } else {
         println!("{}", format!("html{}", path));
 
-        let pathString = format!("html{}", path);
-        let contents = fs::read_to_string(pathString)?;
+        let path_string = format!("html{}", path);
+        let contents = fs::read_to_string(path_string)?;
 
         let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}",
                                "HTTP/1.1 200 OK",
