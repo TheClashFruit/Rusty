@@ -31,7 +31,7 @@ fn handle_connection(mut stream: TcpStream) {
     .replace(" HTTP/1.1", "")
     .replace("\r", "");
 
-  if(env::consts::OS == "windows") {
+  if env::consts::OS == "windows" {
     let path = path.replace("/", "\\");
 
     send_response(&mut stream, path);
