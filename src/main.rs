@@ -33,13 +33,19 @@ fn handle_connection(mut stream: TcpStream) {
     .replace("POST ", "")
     .replace(" HTTP/1.1", "");
 
-  send_response(&mut stream, &path);
+  if(env::consts::OS == "windows") {
+    let path = path.replace("/", "\\");
+
+    send_response(&mut stream, &path);
+  } else {
+    send_response(&mut stream, &path);
+  }
 }
 
 fn send_response(stream: &mut TcpStream, path: &str) {
   catch! {
     try {
-      if path.ends_with("/") {
+      if path.ends_with("/") || path.ends_with("\\") {
         println!("{}", format!("html{}index.html", path));
 
         let pathString = format!("html{}index.html", path);
