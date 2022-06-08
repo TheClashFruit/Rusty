@@ -1,8 +1,8 @@
 # Contributing
 
 Thank you for having interest in contributing to Rusty. If you have any questions, 
-check the FAQ at (Rusty's website)[rusty.theclashfruit.me/faq] if your question is 
-not answered there you can ask on my (Discord Server)[https://discord.gg/CWEApqJ6rc].
+check the FAQ at [Rusty's website](rusty.theclashfruit.me/faq) if your question is 
+not answered there you can ask on my [Discord Server](https://discord.gg/CWEApqJ6rc).
 
 In this guide you will learn how to contribute to the project.
 
