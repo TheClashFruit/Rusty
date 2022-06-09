@@ -57,15 +57,27 @@ fn send_response(stream: &mut TcpStream, path: String) {
         println!("{}", format!("html{}index.html", path));
 
         let path_string = format!("html{}index.html", path);
-        let contents = fs::read_to_string(path_string)?;
+        if(fs::metadata(&path_string).is_ok()) {
+          let contents = fs::read_to_string(path_string).unwrap();
 
-        let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}",
-                               "HTTP/1.1 200 OK",
-                               contents.len(),
-                               contents);
+          let response = format!("{}\r\nContent-Length: {}\r\nContent-Type: text/html\r\n\r\n{}",
+                                 "HTTP/1.1 200 OK",
+                                 contents.len(),
+                                 contents);
 
-        stream.write(response.as_bytes()).unwrap();
-        stream.flush().unwrap();
+          stream.write(response.as_bytes()).unwrap();
+          stream.flush().unwrap();
+        } else {
+          let contents = format!("<html><body><h1>Index of {}</h1><hr/></body></html>", path);
+
+          let response = format!("{}\r\nContent-Length: {}\r\nContent-Type: text/html\r\n\r\n{}",
+                                 "HTTP/1.1 200 OK",
+                                 contents.len(),
+                                 contents);
+
+          stream.write(response.as_bytes()).unwrap();
+          stream.flush().unwrap();
+        }
       } else {
         println!("{}", format!("html{}", path));
 
