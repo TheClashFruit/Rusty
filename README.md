@@ -1,6 +1,6 @@
 # Rusty
 
-A web server written in rust, it's an experimental project.
+A high-performance web server written in Rust.
 
 ## Building
 
