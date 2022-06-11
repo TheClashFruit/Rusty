@@ -44,6 +44,16 @@ fn parse_config(os: &str) {
   }
 }
 
+// listener handler
+
+fn handle_listener(listener: TcpListener) {
+  for stream in listener.incoming() {
+    let stream = stream.unwrap();
+
+    handle_connection(stream);
+  }
+}
+
 // connection handler
 
 fn handle_connection(mut stream: TcpStream) {
