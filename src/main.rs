@@ -6,7 +6,7 @@ use std::env;
 use std::thread;
 
 fn main() {
-  let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
+  let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
 
   for stream in listener.incoming() {
     let stream = stream.unwrap();
@@ -70,7 +70,7 @@ fn send_response(stream: &mut TcpStream, path: String) {
   } else {
     let path_string = format!("html{}", path);
     if fs::metadata(&path_string).is_ok() {
-      let contents = fs::read_to_string(path_string)?;
+      let contents = fs::read_to_string(path_string).unwrap();
 
       let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}", "HTTP/1.1 200 OK", contents.len(), contents);
 
