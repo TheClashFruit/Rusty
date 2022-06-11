@@ -4,13 +4,16 @@ use std::io::prelude::*;
 use std::fs;
 use std::env;
 use std::thread;
+use log::{info, warn};
 
 fn main() {
-  let listener_http  = TcpListener::bind("0.0.0.0:80").unwrap();
-  let listener_https = TcpListener::bind("0.0.0.0:443").unwrap();
+  info!(target: "main_logs", "Rusty server is staring.");
 
-  thread::spawn(|| { handle_listener(listener_http); });
-  thread::spawn(|| { handle_listener(listener_https); });
+  let listener_http  = TcpListener::bind("0.0.0.0:8080").unwrap();
+  let listener_https = TcpListener::bind("0.0.0.0:8443").unwrap();
+
+  thread::spawn(|| { handle_listener(listener_http); }).join().unwrap();
+  thread::spawn(|| { handle_listener(listener_https); }).join().unwrap();
 }
 
 fn handle_listener(mut listener: TcpListener) {

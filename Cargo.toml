@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 httparse = "1.7.1"
-try-catch = "0.2.2"
 dirs = "4.0.0"
+log = "0.4.17"
