@@ -3,7 +3,6 @@ use std::net::TcpStream;
 use std::io::prelude::*;
 use std::fs;
 use std::env;
-use try_catch::*;
 
 fn main() {
   let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
@@ -28,6 +27,12 @@ fn handle_connection(mut stream: TcpStream) {
     .unwrap_or_else(|| &buffer_string)
     .replace("GET ", "")
     .replace("POST ", "")
+    .replace("PUT ", "")
+    .replace("HEAD ", "")
+    .replace("TRACE ", "")
+    .replace("DELETE ", "")
+    .replace("CONNECT ", "")
+    .replace("OPTIONS ", "")
     .replace(" HTTP/1.1", "")
     .replace("\r", "");
 
@@ -41,65 +46,35 @@ fn handle_connection(mut stream: TcpStream) {
 }
 
 fn send_response(stream: &mut TcpStream, path: String) {
-  catch! {
-    try {
-      if path == "/info.rusty.dbg" || path == "\\info.rusty.dbg" {
-        let contents = format!("<rusty><os><name>{}</name></os></rusty>", env::consts::OS);
+  if path.ends_with(&"/") || path.ends_with(&"\\") {
+    let path_string = format!("html{}index.html", path);
 
-        let response = format!("{}\r\nContent-Length: {}\r\nContent-Type: application/xml\r\n\r\n{}",
-                               "HTTP/1.1 200 OK",
-                               contents.len(),
-                               contents);
+    if fs::metadata(&path_string).is_ok() {
+      let contents = fs::read_to_string(path_string).unwrap();
 
-        stream.write(response.as_bytes()).unwrap();
-        stream.flush().unwrap();
-      } else if path.ends_with(&"/") || path.ends_with(&"\\") {
-        println!("{}", format!("html{}index.html", path));
+      let response = format!("{}\r\nContent-Length: {}\r\nContent-Type: text/html\r\n\r\n{}", "HTTP/1.1 200 OK", contents.len(), contents);
 
-        let path_string = format!("html{}index.html", path);
-        if(fs::metadata(&path_string).is_ok()) {
-          let contents = fs::read_to_string(path_string).unwrap();
+      stream.write(response.as_bytes()).unwrap();
+      stream.flush().unwrap();
+    } else {
+      let contents = format!("<html><body><h1>Index of {}</h1><hr/></body></html>", path);
 
-          let response = format!("{}\r\nContent-Length: {}\r\nContent-Type: text/html\r\n\r\n{}",
-                                 "HTTP/1.1 200 OK",
-                                 contents.len(),
-                                 contents);
+      let response = format!("{}\r\nContent-Length: {}\r\nContent-Type: text/html\r\n\r\n{}", "HTTP/1.1 200 OK", contents.len(), contents);
 
-          stream.write(response.as_bytes()).unwrap();
-          stream.flush().unwrap();
-        } else {
-          let contents = format!("<html><body><h1>Index of {}</h1><hr/></body></html>", path);
-
-          let response = format!("{}\r\nContent-Length: {}\r\nContent-Type: text/html\r\n\r\n{}",
-                                 "HTTP/1.1 200 OK",
-                                 contents.len(),
-                                 contents);
-
-          stream.write(response.as_bytes()).unwrap();
-          stream.flush().unwrap();
-        }
-      } else {
-        println!("{}", format!("html{}", path));
-
-        let path_string = format!("html{}", path);
-        let contents = fs::read_to_string(path_string)?;
-
-        let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}",
-                               "HTTP/1.1 200 OK",
-                               contents.len(),
-                               contents);
-
-        stream.write(response.as_bytes()).unwrap();
-        stream.flush().unwrap();
-      }
+      stream.write(response.as_bytes()).unwrap();
+      stream.flush().unwrap();
     }
-    catch err {
-      println!("{}\nError: {}", format!("html{}", path), err);
+  } else {
+    let path_string = format!("html{}", path);
+    if fs::metadata(&path_string).is_ok() {
+      let contents = fs::read_to_string(path_string)?;
 
-      let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}",
-                             "HTTP/1.1 404 NOT FOUND",
-                             0,
-                             "404 NOT FOUND");
+      let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}", "HTTP/1.1 200 OK", contents.len(), contents);
+
+      stream.write(response.as_bytes()).unwrap();
+      stream.flush().unwrap();
+    } else {
+      let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}", "HTTP/1.1 404 Not Found", 0, "");
 
       stream.write(response.as_bytes()).unwrap();
       stream.flush().unwrap();
