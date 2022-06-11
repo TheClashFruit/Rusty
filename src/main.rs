@@ -9,12 +9,32 @@ use log::{info, warn};
 fn main() {
   info!(target: "main_logs", "Rusty server is staring.");
 
+  check_config(env::consts::OS);
+
   let listener_http  = TcpListener::bind("0.0.0.0:8080").unwrap();
   let listener_https = TcpListener::bind("0.0.0.0:8443").unwrap();
 
   thread::spawn(|| { handle_listener(listener_http); }).join().unwrap();
   thread::spawn(|| { handle_listener(listener_https); }).join().unwrap();
 }
+
+// config file check
+
+fn check_config(os: &str) {
+  if os == "linux" {
+    if fs::metadata("/etc/rusty/main.conf").is_ok() {
+      info!(target: "main_logs", "Config file found.");
+    } else {
+      warn!(target: "main_logs", "Config file not found.");
+      info!(target: "main_logs", "Creating config file.");
+
+      fs::create_dir_all("/etc/rusty").unwrap();
+      fs::write("/etc/rusty/main.conf", "HttpPort 80\nHttpsPort 443\n\nServerRoot /var/www/public_html").unwrap();
+    }
+  }
+}
+
+// listener handler
 
 fn handle_listener(mut listener: TcpListener) {
   for stream in listener.incoming() {
@@ -25,6 +45,8 @@ fn handle_listener(mut listener: TcpListener) {
     });
   }
 }
+
+// connection handler
 
 fn handle_connection(mut stream: TcpStream) {
   let mut buffer = [0; 1024];
