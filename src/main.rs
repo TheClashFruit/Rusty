@@ -32,17 +32,15 @@ fn check_config(os: &str) {
       fs::write("/etc/rusty/main.conf", "HttpPort 80\nHttpsPort 443\n\nServerRoot /var/www/public_html").unwrap();
     }
   }
+
+  parse_config(os);
 }
 
-// listener handler
+fn parse_config(os: &str) {
+  if os == "linux" {
+    let config_data = fs::read_to_string("/etc/rusty/main.conf").unwrap();
 
-fn handle_listener(mut listener: TcpListener) {
-  for stream in listener.incoming() {
-    let stream = stream.unwrap();
-
-    thread::spawn(|| {
-      handle_connection(stream);
-    });
+    let mut config_lines = config_data.lines();
   }
 }
 
